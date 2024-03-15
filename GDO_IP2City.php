@@ -6,6 +6,9 @@ use GDO\Core\GDO;
 use GDO\Core\GDO_DBException;
 use GDO\Core\GDT_Char;
 use GDO\Core\GDT_String;
+use GDO\Maps\GDT_Lat;
+use GDO\Maps\GDT_Lng;
+use GDO\Maps\GDT_Position;
 use GDO\Net\GDT_PackedIP;
 
 final class GDO_IP2City extends GDO
@@ -28,6 +31,8 @@ final class GDO_IP2City extends GDO
             GDT_PackedIP::make('cip_max')->primary()->notNull(),
             GDT_String::make('cip_city')->max(196)->notNull(),
             GDT_Char::make('cip_country')->length(2)->notNull(),
+            GDT_Lat::make('cip_pos_lat'),
+            GDT_Lng::make('cip_pos_lng'),
         ];
     }
 

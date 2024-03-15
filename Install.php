@@ -10,6 +10,8 @@ use GDO\Core\GDT_UInt;
 use GDO\Country\GDT_Country;
 use GDO\DB\Database;
 use GDO\IP2City\Method\Import;
+use GDO\Maps\GDT_Lat;
+use GDO\Maps\GDT_Lng;
 use GDO\Util\CSV;
 
 final class Install
@@ -23,6 +25,7 @@ final class Install
         if (self::isEmpty())
         {
             Import::make()->run();
+            self::installCities();
         }
     }
 
@@ -56,7 +59,7 @@ final class Install
     {
         try
         {
-            $columns = GDO_IP2City::table()->gdoColumnsOnly('cip_min', 'cip_max', 'cip_city', 'cip_country');
+            $columns = GDO_IP2City::table()->gdoColumnsOnly('cip_min', 'cip_max', 'cip_city', 'cip_country', 'cip_pos_lat', 'cip_pos_lng');
             $bulk = [];
             Database::instance()->disableForeignKeyCheck();
             if ($fp = gzopen($path, 'r'))
@@ -85,6 +88,8 @@ final class Install
                         inet_pton($ipmax),
                         $cityname,
                         $country,
+                        $lat,
+                        $lng,
                     ];
                     if (count($bulk) === 200)
                     {
@@ -115,6 +120,29 @@ final class Install
     private static function isEmpty(): bool
     {
         return GDO_IP2City::table()->countWhere() === 0;
+    }
+
+    /**
+     * @throws GDO_DBException
+     */
+    public static function installCities(): void
+    {
+        $cities = [];
+        $columns = GDO_City::table()->gdoColumnsOnly('city_name', 'city_country');
+        $columns[] = GDT_Lat::make('city_pos_lat');
+        $columns[] = GDT_Lng::make('city_pos_lng');
+
+        $result = GDO_IP2City::table()->select()->group('cip_country, cip_city')->exec();
+        while ($row = $result->fetchAssoc())
+        {
+            $cities[] = [
+                $row['cip_city'],
+                $row['cip_country'],
+                $row['cip_pos_lat'],
+                $row['cip_pos_lng'],
+            ];
+        }
+        GDO_City::bulkInsert($columns, $cities);
     }
 
 }

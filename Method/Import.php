@@ -20,6 +20,7 @@ final class Import extends MethodCronjob
     {
         Install::installIPv4();
         Install::installIPv6();
+//        Install::installCities();
     }
 
 }
